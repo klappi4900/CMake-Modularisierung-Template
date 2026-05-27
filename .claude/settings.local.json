@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -f code/compositor/Application.h code/compositor/Application.cpp)",
+      "Bash(mkdir -p code/compositor/include/compositor code/compositor/src code/F_OP_Check/include/fileio/checks code/F_OP_Check/src/checks code/logger/include/logging code/logger/src code/app/interfaces/fileio code/app/interfaces/logging)",
+      "Bash(rmdir code/F_OP_Check/includes code/F_OP_Check/interfaces)",
+      "Bash(rm -rf build)",
+      "Bash(cmake -S . -B build)",
+      "PowerShell(Remove-Item *)"
+    ]
+  }
+}
