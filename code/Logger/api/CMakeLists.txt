@@ -7,7 +7,7 @@ target_include_directories(${MODULE_NAME}
 )
 
 # Include-Verzeichnisse:
-#   PUBLIC  = sichtbar fuer alle, die "logging" linken (main.cpp bekommt logging.h)
-#   PRIVATE = nur intern fuer die Logger-Kompilierung
+#   PUBLIC  = sichtbar für alle, die "logging" linken (main.cpp bekommt logging.h)
+#   PRIVATE = nur intern für die Logger-Kompilierung
 
 # Vertrag des logger-Moduls: ILogger.

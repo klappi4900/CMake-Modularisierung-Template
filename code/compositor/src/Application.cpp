@@ -1,11 +1,11 @@
 // compositor/src/Application.cpp
 // Komposition: hier darf alles Konkrete bekannt sein.
-#include "compositor/Application.h"
+#include "Application.h"
 
 #include <vector>
 
-#include "F_OPCheck/FileWriter.h"
-#include "Logger/Logger.h"
+#include "FileWriter.h"
+#include "Logger.h"
 
 Application::Application() {
     std::vector<std::unique_ptr<IWriteCheck>> checks;   // vorerst leer
@@ -19,4 +19,9 @@ Application::~Application() = default;
 
 void Application::run() {
     logger_->log("Anwendung gestartet");
+}
+
+void Application::stop()
+{
+    logger_->log("Anwendung gestoppt");
 }

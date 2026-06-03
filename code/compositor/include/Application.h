@@ -7,8 +7,9 @@ class ILogger;
 class Application {
 public:
     Application();
-    ~Application();
+    ~Application() = default;
     void run();
+    void stop();
 
 private:
     std::unique_ptr<IFileWriter> fileWriter_;
