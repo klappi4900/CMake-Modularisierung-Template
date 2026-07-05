@@ -1,6 +1,9 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+# Persönliche Editor-Einstellungen (Formatierung, Inspection-Severities)
+/editor.xml
+/inspectionProfiles/
 # Editor-based HTTP Client requests
 /httpRequests/
 # Ignored default folder with query files
