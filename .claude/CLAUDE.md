@@ -39,10 +39,26 @@ Include-Pfade folgen dem Modul-Prefix: `#include "Logger/Logger.h"`, `#include "
 
 1. Verzeichnis `code/<Name>/` mit `api/`, `include/<Name>/`, `src/` anlegen.
 2. `api/CMakeLists.txt`: INTERFACE-Lib `<Name>_API`, `target_include_directories(... INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})`.
-3. `code/<Name>/CMakeLists.txt`: `add_subdirectory(api)` zuerst, dann STATIC-Lib mit `target_link_libraries(<Name> PUBLIC <Name>_API)` plus fremde `*_API`-Abhängigkeiten.
-4. In Root-`CMakeLists.txt` `add_subdirectory(code/<Name>)` **vor** `code/compositor` einhängen.
+3. `code/<Name>/CMakeLists.txt`: ein Aufruf `add_module(NAME <Name> DEPENDS <Fremde>_API)` (Helferfunktion aus `cmake/AddModule.cmake`, kapselt `add_subdirectory(api)`, `add_library` STATIC, Include-Dirs, `target_link_libraries`).
+4. In Root-`CMakeLists.txt` `add_subdirectory(code/<Name>)` **vor** `code/compositor` einhängen (ggf. mit eigenem `option(ENABLE_<NAME> ...)`-Schalter, siehe unten).
+
+`Compositor` und `app` nutzen `add_module()` **nicht** — sie haben eigene CMakeLists.txt (Compositor braucht die `if(TARGET ...)`-Guards, app ist nur `add_executable`).
+
+## Optionale Module (`ENABLE_LOGGER` / `ENABLE_F_OPCHECK`)
+
+Root-`CMakeLists.txt` schaltet `Logger`/`F_OP_Check` per `option()` an/aus
+(Standard `ON`). `code/compositor/CMakeLists.txt` prüft mit `if(TARGET F_OPCheck)`
+bzw. `if(TARGET Logger)`, ob das jeweilige Target überhaupt existiert, bevor
+gelinkt wird, und setzt bei Erfolg zusätzlich eine **PUBLIC** Compile-Definition
+(`ENABLE_F_OPCHECK`/`ENABLE_LOGGER`). Diese steuert `#ifdef`-Blöcke in
+`Application.h`/`.cpp` (Member, Includes, Nutzung) — PUBLIC ist nötig, damit
+`app/main.cpp` (inkludiert `Application.h`) denselben Makro-Stand sieht wie
+`Application.cpp`, sonst ODR-Verstoß durch unterschiedliches Klassenlayout.
+`ENABLE_LOGGER=ON` ohne `ENABLE_F_OPCHECK=ON` bricht mit `FATAL_ERROR` ab
+(Logger braucht `IFileWriter&`, `FileWriter` ist die einzige Implementierung).
+Details siehe `README.md`.
 
 ## Fallstricke
 
-- Root-`CMakeLists.txt` referenziert `code/logger` kleingeschrieben, das Verzeichnis heißt `Logger` — funktioniert nur, weil Windows-Dateisystem case-insensitive ist. Auf Linux würde der Build brechen.
-- `file(GLOB ... CONFIGURE_DEPENDS)` wird in `F_OPCheck` und `Compositor` für Sources benutzt, `Logger` listet Sources explizit. Beim Hinzufügen neuer `.cpp`-Dateien entsprechend vorgehen.
+- `if(TARGET ...)` wird **sofort** beim Erreichen der Zeile ausgewertet, nicht erst am Ende der Konfiguration wie `target_link_libraries`. Deshalb müssen `code/Logger`/`code/F_OP_Check` im Root **vor** `code/compositor` per `add_subdirectory` eingebunden werden — sonst sind die Guards immer `false`.
+- `file(GLOB ... CONFIGURE_DEPENDS)` wird über `add_module()` einheitlich für Sources benutzt (Logger, F_OPCheck). `Compositor` globt weiterhin selbst in seiner eigenen CMakeLists.txt. Beim Hinzufügen neuer `.cpp`-Dateien reicht ein erneutes Konfigurieren.
