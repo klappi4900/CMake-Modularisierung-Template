@@ -1,0 +1,2 @@
+- [CMake-Modularisierungs-Template](cmake_modularization_template.md) — Users bevorzugtes Architektur-Muster für neue modulare C++/CMake-Projekte (Vertrag/API, Composition Root, optionale Module).
+- [Geplantes GUI-Modul](planned_gui_module.md) — GUI wird später über Compositor mit eigener API eingebunden, um austauschbar zu bleiben.
