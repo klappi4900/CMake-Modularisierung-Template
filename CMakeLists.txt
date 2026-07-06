@@ -11,8 +11,8 @@ include(cmake/AddModule.cmake)
 # Jedes Modul ist self-contained: enthält seine eigene api/-Sublib
 # (INTERFACE, nur Header) und darüber die Implementierung.
 
-option(ENABLE_LOGGER    "Logger-Modul einbinden"    ON)
-option(ENABLE_F_OPCHECK "F_OP_Check-Modul einbinden" ON)
+option(ENABLE_LOGGER    "Logger-Modul einbinden"     ON )
+option(ENABLE_F_OPCHECK "F_OP_Check-Modul einbinden" ON )
 
 if(ENABLE_LOGGER AND NOT ENABLE_F_OPCHECK)
     message(FATAL_ERROR "ENABLE_LOGGER erfordert ENABLE_F_OPCHECK (Logger-Konstruktor braucht eine IFileWriter-Implementierung).")

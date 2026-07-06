@@ -18,7 +18,7 @@ Es gibt keine Tests, keinen Linter und keine CI — dies ist ein Lernprojekt fü
 
 ## Architektur
 
-Vier Module unter `code/`, jedes mit derselben Struktur (`api/` + `include/` + `src/` + `CMakeLists.txt`). Strikte Trennung von **Vertrag** (API, INTERFACE-Lib, nur Header) und **Implementierung** (STATIC-Lib):
+Vier Module unter `code/`. `F_OP_Check` und `Logger` folgen derselben Struktur (`api/` + `include/` + `src/` + `CMakeLists.txt`) mit strikter Trennung von **Vertrag** (API, INTERFACE-Lib, nur Header) und **Implementierung** (STATIC-Lib). `Compositor` hat nur `include/` + `src/` (kein eigenes `api/`, da niemand gegen `Compositor` linkt außer `app`). `app` ist flach — `main.cpp`, `Presets.h`/`.cpp`, `CMakeLists.txt` direkt unter `code/app/`, keine Unterordner:
 
 ```
 app (exe)  →  Compositor  →  F_OPCheck     (Impl)  →  F_OPCheck_API   (Interfaces)
@@ -30,7 +30,7 @@ Kernregeln, die der Code durchgängig durchhält und die bei Änderungen zu wahr
 
 - **Module linken nur gegen fremde APIs, nie gegen fremde Implementierungen.** `Logger` linkt `F_OPCheck_API` (PUBLIC, weil `Logger.h` im Konstruktor `IFileWriter&` führt), aber **nicht** `F_OPCheck`. Siehe Kommentar in `code/Logger/CMakeLists.txt`.
 - **Komposition ausschließlich im `Compositor`-Modul.** Nur `Application.cpp` darf konkrete Typen (`FileWriter`, `Logger`) kennen und instanziieren — dort werden Implementierungen über `PRIVATE`-Links eingebunden. `Application.h` benutzt nur Forward-Decls und `std::unique_ptr<IFileWriter/ILogger>`, damit Consumer keine Implementierungen ziehen.
-- **`app/main.cpp` kennt ausschließlich `Compositor`.** Keine direkten Abhängigkeiten zu Logger/F_OPCheck.
+- **`app/main.cpp` kennt von den Modulen ausschließlich `Compositor`.** Keine direkten Abhängigkeiten zu Logger/F_OPCheck. Daneben nutzt `main.cpp` `Presets.h`/`.cpp` (App-interne Helper wie `LoadPresets()`, `SetupKonsoleToGerman()`) — das ist kein Modul im obigen Sinn, sondern gehört zu `app` selbst.
 - **PUBLIC vs PRIVATE bei `target_link_libraries` ist bewusst gewählt** und folgt der Sichtbarkeit der Typen in den Headern. Vor Änderung prüfen, ob der Typ im öffentlichen Header auftaucht (→ PUBLIC) oder nur in `.cpp` (→ PRIVATE).
 
 Include-Pfade folgen dem Modul-Prefix: `#include "Logger/Logger.h"`, `#include "F_OPCheck/FileWriter.h"`, `#include "I_API_Logger/ILogger.h"`, `#include "I_F_OPCheck/IFileWriter.h"`. Das Prefix kommt vom Verzeichnis unter `include/` bzw. `api/`, nicht vom Library-Namen.
@@ -62,3 +62,4 @@ Details siehe `README.md`.
 
 - `if(TARGET ...)` wird **sofort** beim Erreichen der Zeile ausgewertet, nicht erst am Ende der Konfiguration wie `target_link_libraries`. Deshalb müssen `code/Logger`/`code/F_OP_Check` im Root **vor** `code/compositor` per `add_subdirectory` eingebunden werden — sonst sind die Guards immer `false`.
 - `file(GLOB ... CONFIGURE_DEPENDS)` wird über `add_module()` einheitlich für Sources benutzt (Logger, F_OPCheck). `Compositor` globt weiterhin selbst in seiner eigenen CMakeLists.txt. Beim Hinzufügen neuer `.cpp`-Dateien reicht ein erneutes Konfigurieren.
+- `code/app/CMakeLists.txt` globt **nicht** — `add_executable(Application main.cpp)` listet nur `main.cpp` explizit. `Presets.cpp` wird stattdessen direkt per `#include "Presets.cpp"` in `main.cpp` eingebunden (nicht als eigene Übersetzungseinheit kompiliert), deshalb sind alle Funktionen darin `inline`. Neue `.cpp`-Dateien unter `code/app/` werden nur gebaut, wenn sie entweder ebenso `#include`t oder explizit in `add_executable(...)` ergänzt werden.
