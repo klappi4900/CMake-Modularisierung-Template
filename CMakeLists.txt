@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Fügt die Module zentral hinzu.
 include(cmake/AddModule.cmake)
+include(cmake/AddInterface.cmake)
 
 # Jedes Modul ist self-contained: enthält seine eigene api/-Sublib
 # (INTERFACE, nur Header) und darüber die Implementierung.

@@ -1,13 +1,4 @@
-set(MODULE_NAME Logger_API)
-add_library(${MODULE_NAME} INTERFACE)
+add_interface(NAME Logger)
 
-target_include_directories(${MODULE_NAME}
-        INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-# Include-Verzeichnisse:
-#   PUBLIC  = sichtbar für alle, die "logging" linken (main.cpp bekommt logging.h)
-#   PRIVATE = nur intern für die Logger-Kompilierung
-
-# Vertrag des logger-Moduls: ILogger.
+# Vertrag des Logger-Moduls: ILogger.
+# Wer dieses Interface braucht, linkt gegen Logger_API - nicht gegen die Implementierung.

@@ -38,7 +38,7 @@ Include-Pfade folgen dem Modul-Prefix: `#include "Logger/Logger.h"`, `#include "
 ## Neues Modul hinzufügen
 
 1. Verzeichnis `code/<Name>/` mit `api/`, `include/<Name>/`, `src/` anlegen.
-2. `api/CMakeLists.txt`: INTERFACE-Lib `<Name>_API`, `target_include_directories(... INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})`.
+2. `api/CMakeLists.txt`: ein Aufruf `add_interface(NAME <Name>)` (Helferfunktion aus `cmake/AddInterface.cmake`, legt die INTERFACE-Lib `<Name>_API` an und setzt `target_include_directories(... INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})`). `NAME` ist der bare Modulname — das Suffix `_API` hängt die Funktion selbst an. Braucht ein öffentlicher API-Header einen Typ aus einem fremden Vertrag: `add_interface(NAME <Name> DEPENDS <Fremde>_API)`.
 3. `code/<Name>/CMakeLists.txt`: ein Aufruf `add_module(NAME <Name> DEPENDS <Fremde>_API)` (Helferfunktion aus `cmake/AddModule.cmake`, kapselt `add_subdirectory(api)`, `add_library` STATIC, Include-Dirs, `target_link_libraries`).
 4. In Root-`CMakeLists.txt` `add_subdirectory(code/<Name>)` **vor** `code/compositor` einhängen (ggf. mit eigenem `option(ENABLE_<NAME> ...)`-Schalter, siehe unten).
 
