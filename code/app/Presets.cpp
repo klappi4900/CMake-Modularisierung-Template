@@ -4,6 +4,10 @@
 #pragma once
 #include "Presets.h"
 
+#include <fstream>
+#include <iostream>
+#include <nlohmann/json.hpp>
+
 inline void SetupKonsoleToGerman(){
     // Globale Locale auf System-Sprache setzen
     //std::locale::global(std::locale(""));
@@ -17,9 +21,43 @@ inline void SetupKonsoleToGerman(){
 };
 
 inline void LoadPresets(){
-    // TODO: Presets aus Datei/Konfiguration laden und global setzen.
-    // Aktuell bewusst ein No-Op-Stub, damit keine toten Variablen suggerieren,
-    // dass hier schon etwas konfiguriert wird.
+#ifdef APP_CONFIG_FILE
+    // Laufzeit-Konfiguration aus der per add_config() verdrahteten config.json lesen.
+    std::ifstream in(APP_CONFIG_FILE);
+    if (!in) {
+        std::cerr << "[Presets] Konfiguration nicht gefunden: " << APP_CONFIG_FILE << "\n";
+        return;
+    }
+
+    const nlohmann::json cfg = nlohmann::json::parse(in, nullptr, /*allow_exceptions=*/false);
+    if (cfg.is_discarded()) {
+        std::cerr << "[Presets] config.json ist kein gueltiges JSON.\n";
+        return;
+    }
+
+    if (cfg.value("konsoleUtf8", false)) {
+        SetupKonsoleToGerman();
+    }
+
+    const auto begruessung = cfg.value("begruessung", std::string{});
+    if (!begruessung.empty()) {
+        std::cout << begruessung << "\n";
+    }
+    std::cout << "[Presets] Sprache=" << cfg.value("sprache",  std::string{"?"})
+              << ", LogLevel="        << cfg.value("logLevel", std::string{"?"}) << "\n";
+#else
+    // Ohne add_config() ist keine Konfiguration verdrahtet -> No-Op (wie zuvor).
+#endif
+}
+
+inline void WriteLog(const std::string& nachricht){
+#ifdef APP_LOG_FILE
+    // In die per add_log() verdrahtete Logdatei neben der Exe anhaengen.
+    std::ofstream out(APP_LOG_FILE, std::ios::app);
+    if (out) {
+        out << nachricht << "\n";
+    }
+#endif
 }
 
 

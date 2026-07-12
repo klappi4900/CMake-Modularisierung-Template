@@ -4,8 +4,11 @@
 
 int main() {
     LoadPresets();
+    WriteLog("Anwendung gestartet");
 
     Application app;
     app.run();
     app.stop();
+
+    WriteLog("Anwendung gestoppt");
 }

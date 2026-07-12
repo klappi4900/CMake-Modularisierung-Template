@@ -15,6 +15,7 @@ Application::Application() {
 #ifdef ENABLE_F_OPCHECK
     std::vector<std::unique_ptr<IWriteCheck>> checks;   // vorerst leer
     auto fw = std::make_unique<FileWriter>(std::move(checks));
+
 #ifdef ENABLE_LOGGER
     logger_ = std::make_unique<Logger>(*fw);
 #endif

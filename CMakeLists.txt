@@ -8,6 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Fügt die Module zentral hinzu.
 include(cmake/AddModule.cmake)
 include(cmake/AddInterface.cmake)
+include(cmake/AddLog.cmake)
+include(cmake/AddConfig.cmake)
 
 # Jedes Modul ist self-contained: enthält seine eigene api/-Sublib
 # (INTERFACE, nur Header) und darüber die Implementierung.
@@ -19,6 +21,8 @@ if(ENABLE_LOGGER AND NOT ENABLE_F_OPCHECK)
     message(FATAL_ERROR "ENABLE_LOGGER erfordert ENABLE_F_OPCHECK (Logger-Konstruktor braucht eine IFileWriter-Implementierung).")
 endif()
 
+
+
 # Wichtig: vor add_subdirectory(code/compositor) einhängen, da Compositor per
 # if(TARGET ...) prüft, ob diese Targets bereits existieren.
 if(ENABLE_LOGGER)
@@ -28,8 +32,12 @@ if(ENABLE_F_OPCHECK)
     add_subdirectory(code/F_OP_Check)
 endif()
 
+# Dritt-Bibliotheken (nlohmann/json) bereitstellen, bevor Module dagegen linken.
+add_subdirectory(libs)
 add_subdirectory(code/app)
 add_subdirectory(code/compositor)
+
+
 
 
 
