@@ -1,12 +1,12 @@
 #pragma once
-// app-Layer: Persistenz + Argument-Merge fuer den Konfigurations-Vertrag.
-// Haelt JSON (nlohmann) aus dem Vertrag heraus - dieser Header kennt kein JSON,
-// nur der zugehoerige .cpp bindet nlohmann ein.
+// Impl-Header des Konfiguration-Moduls: Persistenz + Argument-Merge fuer den
+// Vertrag. Haelt JSON aus dem Vertrag heraus - dieser Header kennt kein JSON,
+// nur KonfigurationIO.cpp bindet nlohmann ein.
 #include <filesystem>
 #include <map>
 #include <string>
 
-#include "I_API_Konfiguration/Konfiguration.h"
+#include "I_Konfiguration/Konfiguration.h"   // Vertrag über Konfiguration_API (kein ../)
 
 namespace Setup
 {
@@ -14,12 +14,10 @@ namespace Setup
     // Code-Defaults aus Konfiguration.
     Konfiguration lade_konfiguration(const std::filesystem::path& pfad);
 
-    // struct -> config.json (eingerueckt). Der explizite "Speichern"-Schritt -
-    // nur hier wird die Datei angefasst.
+    // struct -> config.json (eingerueckt). Der explizite "Speichern"-Schritt.
     void speichere_konfiguration(const Konfiguration& konfig, const std::filesystem::path& pfad);
 
-    // Geparste CLI-Argumente ueber die bestehenden Werte legen (hoechste
-    // Prioritaet in der Kaskade). Nur vorhandene Schluessel ueberschreiben.
+    // Geparste CLI-Argumente ueber die bestehenden Werte legen (hoechste Prioritaet).
     void uebernehme_argumente(Konfiguration& konfig, const std::map<std::string, std::string>& argumente);
 
     void print_konfiguration(const Konfiguration& konfig);

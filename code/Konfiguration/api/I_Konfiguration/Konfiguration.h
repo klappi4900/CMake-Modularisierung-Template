@@ -4,10 +4,9 @@
 namespace Setup
 {
     // Reiner Vertrag: die effektiven Einstellungen als Wert-Objekt.
-    // Bewusst OHNE JSON und OHNE Datei-I/O - damit dieser Header von jeder
-    // Schicht gesehen werden darf (auch vom Compositor und einer spaeteren GUI).
-    // Das Laden/Speichern aus config.json ist Implementierungsdetail des
-    // app-Layers (siehe code/app/KonfigurationIO.*).
+    // Bewusst OHNE JSON und OHNE Datei-I/O - damit dieser Header von jeder Schicht
+    // gesehen werden darf (auch vom Compositor und einer spaeteren GUI).
+    // Laden/Speichern uebernimmt die Impl (include/KonfigurationIO.*).
     struct Konfiguration
     {
         // --- Darstellung / Presets ---
