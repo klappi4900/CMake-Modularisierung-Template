@@ -14,8 +14,8 @@ int main(int argc, char** argv) {
 
     // Konfigurations-Kaskade an der app-Grenze:
     //   struct-Defaults  <-  config.json  <-  CLI-Argumente (hoechste Prioritaet)
-#ifdef APP_CONFIG_FILE
-    Setup::Konfiguration konfig = Setup::lade_konfiguration(APP_CONFIG_FILE);
+#ifdef APP_CONFIG_PATH
+    Setup::Konfiguration konfig = Setup::lade_konfiguration(APP_CONFIG_PATH);
 #else
     Setup::Konfiguration konfig{};
 #endif

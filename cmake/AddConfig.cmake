@@ -5,9 +5,9 @@
 #
 #   add_config(TARGET Application)
 #     -> Target Config; wer Config linkt, erhaelt die Compile-Definitions
-#        APP_CONFIG_FILE="<abs. Pfad zu config/config.json>" (+ CONFIG_FILE als
-#        Alias) sowie LOG_COMPILE_LEVEL (2 im Release, sonst 0). config.json wird
-#        per POST_BUILD neben die Exe kopiert (self-contained deploy).
+#        APP_CONFIG_PATH="<abs. Pfad zu config/config.json>" sowie
+#        LOG_COMPILE_LEVEL (2 im Release, sonst 0). config.json wird per
+#        POST_BUILD neben die Exe kopiert (self-contained deploy).
 #
 # TARGET  Executable, neben deren Binary config.json kopiert wird (Pflicht).
 # NAME    Ziel-/Bibliotheksname (Standard: Config).
@@ -25,14 +25,12 @@ function(add_config)
         set(ARG_FILE "${CMAKE_SOURCE_DIR}/config/config.json")
     endif()
 
-    set(CONFIG_PATH "${CMAKE_SOURCE_DIR}/config")
-
     add_library(${ARG_NAME} INTERFACE)
     target_compile_definitions(${ARG_NAME} INTERFACE
-            "APP_CONFIG_FILE=\"${ARG_FILE}\""
-            "CONFIG_FILE=\"${CONFIG_PATH}/config.json\""
+            "APP_CONFIG_PATH=\"${ARG_FILE}\""
             $<IF:$<CONFIG:Release>,LOG_COMPILE_LEVEL=2,LOG_COMPILE_LEVEL=0>
     )
+    message(STATUS "add_config: APP_CONFIG_PATH=\"${ARG_FILE}\"")
 
     # config.json beim Bauen neben die Executable legen.
     add_custom_command(TARGET ${ARG_TARGET} POST_BUILD

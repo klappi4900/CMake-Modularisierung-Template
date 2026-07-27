@@ -54,7 +54,7 @@ trotzdem nicht blind vertrauen, erst den Ist-Zustand prüfen.
 `add_executable`, app globt nicht) und linkt `Konfiguration_API`. Ablauf:
 `LoadPresets()` liest `config.json` rein anzeigend (UTF-8-Konsole, Begrüßung,
 Sprache/LogLevel); dann baut `main(argc, argv)` die Kaskade auf — `struct`-Defaults
-→ `lade_konfiguration(APP_CONFIG_FILE)` (dieselbe `config.json`) →
+→ `lade_konfiguration(APP_CONFIG_PATH)` (dieselbe `config.json`) →
 `uebernehme_argumente()` mit dem Ergebnis von `ArgumenteAuswerten` (**CLI hat
 Vorrang**) — und gibt sie mit `print_konfiguration()` aus. Danach
 `Application app{konfig};`: die Konfiguration wird per Konstruktor **injiziert**
@@ -99,11 +99,13 @@ Diese vier Funktionen kapseln die gesamte Modul-/Ressourcen-Boilerplate — beim
   Include-Root ist `api/`, daher Includes mit Modul-Prefix
   (`#include "I_API_Logger/ILogger.h"`). Aufruf in `<M>/api/CMakeLists.txt`.
   (`AddInterface.cmake`)
-- `add_config(TARGET <exe>)` — INTERFACE-Target `Config`; setzt
-  `APP_CONFIG_FILE`/`CONFIG_FILE`-Defines und `LOG_COMPILE_LEVEL` (2 Release, sonst
-  0), kopiert `config/config.json` per POST_BUILD neben die Exe. (`AddConfig.cmake`)
-- `add_log()` — INTERFACE-Target `Log`; setzt `APP_LOG_FILE` auf `<root>/log/app.log`
-  und legt das Verzeichnis beim Konfigurieren an. (`AddLog.cmake`)
+- `add_config(TARGET <exe>)` — INTERFACE-Target `Config`; setzt das
+  `APP_CONFIG_PATH`-Define und `LOG_COMPILE_LEVEL` (2 Release, sonst 0), kopiert
+  `config/config.json` per POST_BUILD neben die Exe. (`AddConfig.cmake`)
+- `add_log(TARGET <exe>)` — INTERFACE-Target `Log`; setzt `APP_LOG_FILE` auf
+  `$<TARGET_FILE_DIR:<exe>>/app.log`, also die Logdatei **neben der Exe** (Generator-
+  Expression, erst zur Build-Zeit aufgelöst; kein Verzeichnis wird angelegt).
+  (`AddLog.cmake`)
 
 ## Beim Arbeiten beachten (nicht-offensichtlich)
 
@@ -122,7 +124,7 @@ Diese vier Funktionen kapseln die gesamte Modul-/Ressourcen-Boilerplate — beim
   `code/app/*.cpp`): neue `.cpp` erfordern nur ein erneutes Konfigurieren, keine
   manuelle Listenpflege.
 - **Namenskollision beachten:** Das INTERFACE-Target `Config` (aus `add_config()`,
-  liefert nur `APP_CONFIG_FILE`/Dateikopie) ist **nicht** das Konfigurations-Modul
+  liefert nur `APP_CONFIG_PATH`/Dateikopie) ist **nicht** das Konfigurations-Modul
   `Konfiguration`/`Konfiguration_API` (der Einstellungs-`struct`).
 
 ## Neues Modul hinzufügen

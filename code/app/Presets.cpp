@@ -21,11 +21,11 @@ inline void SetupKonsoleToGerman(){
 };
 
 inline void LoadPresets(){
-#ifdef APP_CONFIG_FILE
+#ifdef APP_CONFIG_PATH
     // Laufzeit-Konfiguration aus der per add_config() verdrahteten config.json lesen.
-    std::ifstream in(APP_CONFIG_FILE);
+    std::ifstream in(APP_CONFIG_PATH);
     if (!in) {
-        std::cerr << "[Presets] Konfiguration nicht gefunden: " << APP_CONFIG_FILE << "\n";
+        std::cerr << "[Presets] Konfiguration nicht gefunden: " << APP_CONFIG_PATH << "\n";
         return;
     }
 
