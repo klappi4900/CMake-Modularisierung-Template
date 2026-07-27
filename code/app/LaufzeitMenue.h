@@ -7,7 +7,7 @@
 //
 #pragma once
 #include <filesystem>
-#include "Konfiguration.h"
+#include "KonfigurationIO.h"   // Vertrag-struct + speichere_konfiguration()
 
 // Startet die interaktive Menü-Schleife.
 //   config        - die effektive Konfiguration; wird direkt verändert (Referenz!).

@@ -2,9 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Zweck
+
+Lernprojekt zur **CMake-Modularisierung**: ein C++23-Projekt in eigenständige,
+gegeneinander abgegrenzte Module (Vertrag/API vs. Implementierung) aufteilen, die
+optional an-/abschaltbar sind. Kein Produktivcode, keine Tests, keine CI. Der
+eigentliche Lerninhalt steckt im CMake-Aufbau, nicht in der Programmlogik.
+
+Ausführliche Begründungen stehen in `README.md` und in den Kommentarköpfen der
+`cmake/*.cmake`-Dateien — dort zuerst nachsehen.
+
 ## Build
 
-CMake-Projekt mit C++23, Ninja-Generator, Build-Verzeichnis `build/`:
+Voraussetzung: CMake ≥ 3.20, Ninja, MSVC (C++23).
 
 ```powershell
 cmake -S . -B build -G Ninja
@@ -12,81 +22,113 @@ cmake --build build
 build\code\app\Application.exe
 ```
 
-Einzelnes Target bauen: `cmake --build build --target <Logger|F_OPCheck|Compositor|Application>`.
-
-Es gibt keine Tests, keinen Linter und keine CI — dies ist ein Lernprojekt für CMake-Modularisierung.
+- Einzelnes Target: `cmake --build build --target <Logger|F_OPCheck|Compositor|Application>`.
+- Module ab-/anschalten (Neu-Konfigurieren nötig):
+  `cmake -S . -B build -DENABLE_LOGGER=OFF -DENABLE_F_OPCHECK=OFF`
 
 ## Architektur
 
-Vier Module unter `code/`. `F_OP_Check` und `Logger` folgen derselben Struktur (`api/` + `include/` + `src/` + `CMakeLists.txt`) mit strikter Trennung von **Vertrag** (API, INTERFACE-Lib, nur Header) und **Implementierung** (STATIC-Lib). `Compositor` hat nur `include/` + `src/` (kein eigenes `api/`, da niemand gegen `Compositor` linkt außer `app`). `app` ist flach — `main.cpp`, `Presets.h`/`.cpp`, `CMakeLists.txt` direkt unter `code/app/`, keine Unterordner:
+Jedes Modul unter `code/<Modul>/` ist self-contained und folgt derselben Struktur:
+`api/` (INTERFACE-Lib `<Modul>_API`, nur Header = der Vertrag), `include/<Modul>/`
+(öffentliche Header der Implementierung), `src/` (nur intern sichtbare `.cpp`),
+plus `CMakeLists.txt`.
 
-```
-app (exe)  →  Compositor  →  F_OPCheck     (Impl)  →  F_OPCheck_API   (Interfaces)
-                          →  Logger         (Impl)  →  Logger_API      (Interfaces)
-                                                    ↘  F_OPCheck_API   (Konstruktor nimmt IFileWriter&)
-```
+Zentrale Regeln:
+- **Module linken nur gegen fremde `_API`-Targets, nie gegen fremde
+  Implementierungen.** Abhängigkeit bleibt auf den Vertrag beschränkt.
+- **Komposition passiert ausschließlich im `Compositor`-Modul**
+  (`code/compositor/src/Application.cpp`). `app/main.cpp` kennt nur `Application`,
+  keine konkreten Logger/F_OPCheck-Typen.
 
-Kernregeln, die der Code durchgängig durchhält und die bei Änderungen zu wahren sind:
+## Aktueller Build-Stand vs. geplante Konfigurations-Kaskade
 
-- **Module linken nur gegen fremde APIs, nie gegen fremde Implementierungen.** `Logger` linkt `F_OPCheck_API` (PUBLIC, weil `Logger.h` im Konstruktor `IFileWriter&` führt), aber **nicht** `F_OPCheck`. Siehe Kommentar in `code/Logger/CMakeLists.txt`.
-- **Komposition ausschließlich im `Compositor`-Modul.** Nur `Application.cpp` darf konkrete Typen (`FileWriter`, `Logger`) kennen und instanziieren — dort werden Implementierungen über `PRIVATE`-Links eingebunden. `Application.h` benutzt nur Forward-Decls und `std::unique_ptr<IFileWriter/ILogger>`, damit Consumer keine Implementierungen ziehen.
-- **`app/main.cpp` kennt von den Modulen ausschließlich `Compositor`.** Keine direkten Abhängigkeiten zu Logger/F_OPCheck. Daneben nutzt `main.cpp` `Presets.h`/`.cpp` (App-interne Helper wie `LoadPresets()`, `SetupKonsoleToGerman()`, `WriteLog()`) — das ist kein Modul im obigen Sinn, sondern gehört zu `app` selbst. `app` linkt außerdem die Ressourcen-Targets `Config`/`Log` (Compile-Definitions für Pfade) und `nlohmann_json` — ebenfalls keine Module (siehe „App-Ressourcen").
-- **PUBLIC vs PRIVATE bei `target_link_libraries` ist bewusst gewählt** und folgt der Sichtbarkeit der Typen in den Headern. Vor Änderung prüfen, ob der Typ im öffentlichen Header auftaucht (→ PUBLIC) oder nur in `.cpp` (→ PRIVATE).
+**Wichtig vor jeder Konfigurations-Änderung:** Die Config-Kaskade ist **vollständig**
+verdrahtet — `config.json`-Laden, CLI-Merge und die Injektion in `Application`
+laufen. Offen ist nur noch das optionale `LaufzeitMenue` (Live-Editor). Der Prosa
+trotzdem nicht blind vertrauen, erst den Ist-Zustand prüfen.
 
-Include-Pfade folgen dem Modul-Prefix: `#include "Logger/Logger.h"`, `#include "F_OPCheck/FileWriter.h"`, `#include "I_API_Logger/ILogger.h"`, `#include "I_F_OPCheck/IFileWriter.h"`. Das Prefix kommt vom Verzeichnis unter `include/` bzw. `api/`, nicht vom Library-Namen.
+**Tatsächlich gebaut** (Root-`CMakeLists.txt`): `Logger`, `F_OP_Check`,
+`Compositor`, `Konfiguration` (nur `Konfiguration_API`, der Vertrag-`struct`),
+`app` (`Application.exe`) + `libs` (nlohmann_json). `app` kompiliert `main.cpp`,
+**`KonfigurationIO.cpp` und `ArgumenteAuswerten.cpp`** (explizit in
+`add_executable`, app globt nicht) und linkt `Konfiguration_API`. Ablauf:
+`LoadPresets()` liest `config.json` rein anzeigend (UTF-8-Konsole, Begrüßung,
+Sprache/LogLevel); dann baut `main(argc, argv)` die Kaskade auf — `struct`-Defaults
+→ `lade_konfiguration(APP_CONFIG_FILE)` (dieselbe `config.json`) →
+`uebernehme_argumente()` mit dem Ergebnis von `ArgumenteAuswerten` (**CLI hat
+Vorrang**) — und gibt sie mit `print_konfiguration()` aus. Danach
+`Application app{konfig};`: die Konfiguration wird per Konstruktor **injiziert**
+(`Application` hält eine `const&`, Muster wie `Logger(IFileWriter&)`), und
+`Application::run()` nutzt sie z. B. für ein `konfig_.verbose`-Zusatzlog.
+
+**Genau ein `Setup::Konfiguration`-Typ:** der reine `struct`
+(`code/Konfiguration/api/I_Konfiguration/Konfiguration.h`, JSON-/I/O-frei, für jede
+Schicht sichtbar). Laden/Speichern/Merge sind **Frei-Funktionen** im app-Layer
+(`code/app/KonfigurationIO.{h,cpp}`: `lade_konfiguration` / `speichere_konfiguration`
+/ `uebernehme_argumente` / `print_konfiguration`); nlohmann wird **nur** in
+`KonfigurationIO.cpp` eingebunden. Die früher konkurrierende app-`class`
+`Konfiguration` wurde entfernt.
+
+**Im Baum, aber NICHT im Build** (Root-`CMakeLists.txt` hat kein `add_subdirectory`
+dafür bzw. `app/CMakeLists.txt` kompiliert sie nicht):
+- Modul `code/Datenbank/` (`IDatenbank` + `InMemoryDatenbank`).
+- app-Datei `LaufzeitMenue.{h,cpp}` (interaktives Menü). Nutzt bereits den `struct`
+  + `speichere_konfiguration()`, ist aber noch nicht in `main.cpp` eingehängt.
+
+**Noch offen (optional):** `LaufzeitMenue` als Live-Editor an `main.cpp` anschließen
+(ändert die Konfiguration interaktiv und schreibt via `speichere_konfiguration()`
+zurück). `config/config.json` bleibt dabei nur an der app-Grenze angefasst, untere
+Schichten nie.
+
+**Abhängigkeiten (gebaut):** `Application`(exe) → `Compositor` → optional
+`F_OPCheck` + `Logger`; `Konfiguration_API` (Vertrag) linken sowohl `app` (für
+`KonfigurationIO`) als auch `Compositor` (PRIVATE, `Application.cpp` liest die
+Felder). `Logger` nimmt im Konstruktor ein `IFileWriter&` (aus `F_OPCheck`), daher
+ist `ENABLE_LOGGER=ON` mit `ENABLE_F_OPCHECK=OFF` ein `FATAL_ERROR` — Logger hat
+sonst keine `IFileWriter`-Implementierung.
+
+## CMake-Helfer (`cmake/`, im Root per `include()` eingebunden)
+
+Diese vier Funktionen kapseln die gesamte Modul-/Ressourcen-Boilerplate — beim
+Ändern des Build-Verhaltens hier ansetzen, nicht in einzelnen `CMakeLists.txt`:
+
+- `add_module(NAME <M> DEPENDS <Fremde>_API)` — `add_subdirectory(api)`, globbt
+  `src/*.cpp`, `add_library(<M> STATIC)`, `include/` PUBLIC + `src/` PRIVATE,
+  linkt PUBLIC gegen `<M>_API` + DEPENDS. (`AddModule.cmake`)
+- `add_interface(NAME <M> [DEPENDS <Foo>_API])` — legt `<M>_API` (INTERFACE) an;
+  Include-Root ist `api/`, daher Includes mit Modul-Prefix
+  (`#include "I_API_Logger/ILogger.h"`). Aufruf in `<M>/api/CMakeLists.txt`.
+  (`AddInterface.cmake`)
+- `add_config(TARGET <exe>)` — INTERFACE-Target `Config`; setzt
+  `APP_CONFIG_FILE`/`CONFIG_FILE`-Defines und `LOG_COMPILE_LEVEL` (2 Release, sonst
+  0), kopiert `config/config.json` per POST_BUILD neben die Exe. (`AddConfig.cmake`)
+- `add_log()` — INTERFACE-Target `Log`; setzt `APP_LOG_FILE` auf `<root>/log/app.log`
+  und legt das Verzeichnis beim Konfigurieren an. (`AddLog.cmake`)
+
+## Beim Arbeiten beachten (nicht-offensichtlich)
+
+- **Reihenfolge im Root-`CMakeLists.txt`:** `code/Logger` und `code/F_OP_Check`
+  müssen *vor* `code/compositor` per `add_subdirectory` kommen. Der Compositor
+  entscheidet mit `if(TARGET Logger)` / `if(TARGET F_OPCheck)`, und `if(TARGET ...)`
+  wird **sofort** ausgewertet (anders als `target_link_libraries`, das Namen erst
+  am Konfig-Ende auflöst).
+- **ODR-Falle bei den Feature-Makros:** `Compositor` setzt `ENABLE_F_OPCHECK` /
+  `ENABLE_LOGGER` als **PUBLIC** compile-definition. Muss PUBLIC bleiben, damit
+  `app/main.cpp` (inkludiert `Application.h`) denselben Makro-Stand wie
+  `Application.cpp` sieht — sonst unterschiedliches Klassenlayout = ODR-Verstoß.
+  Die `#ifdef`-Zweige stecken in `Application.h`/`.cpp` (Member `fileWriter_`,
+  `logger_`, Includes, Konstruktor/`run()`/`stop()`).
+- **`file(GLOB ... CONFIGURE_DEPENDS)`** wird für Sourcen genutzt (Module *und*
+  `code/app/*.cpp`): neue `.cpp` erfordern nur ein erneutes Konfigurieren, keine
+  manuelle Listenpflege.
+- **Namenskollision beachten:** Das INTERFACE-Target `Config` (aus `add_config()`,
+  liefert nur `APP_CONFIG_FILE`/Dateikopie) ist **nicht** das Konfigurations-Modul
+  `Konfiguration`/`Konfiguration_API` (der Einstellungs-`struct`).
 
 ## Neues Modul hinzufügen
 
-1. Verzeichnis `code/<Name>/` mit `api/`, `include/<Name>/`, `src/` anlegen.
-2. `api/CMakeLists.txt`: ein Aufruf `add_interface(NAME <Name>)` (Helferfunktion aus `cmake/AddInterface.cmake`, legt die INTERFACE-Lib `<Name>_API` an und setzt `target_include_directories(... INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})`). `NAME` ist der bare Modulname — das Suffix `_API` hängt die Funktion selbst an. Braucht ein öffentlicher API-Header einen Typ aus einem fremden Vertrag: `add_interface(NAME <Name> DEPENDS <Fremde>_API)`.
-3. `code/<Name>/CMakeLists.txt`: ein Aufruf `add_module(NAME <Name> DEPENDS <Fremde>_API)` (Helferfunktion aus `cmake/AddModule.cmake`, kapselt `add_subdirectory(api)`, `add_library` STATIC, Include-Dirs, `target_link_libraries`).
-4. In Root-`CMakeLists.txt` `add_subdirectory(code/<Name>)` **vor** `code/compositor` einhängen (ggf. mit eigenem `option(ENABLE_<NAME> ...)`-Schalter, siehe unten).
-
-`Compositor` und `app` nutzen `add_module()` **nicht** — sie haben eigene CMakeLists.txt (Compositor braucht die `if(TARGET ...)`-Guards, app ist nur `add_executable`).
-
-## Optionale Module (`ENABLE_LOGGER` / `ENABLE_F_OPCHECK`)
-
-Root-`CMakeLists.txt` schaltet `Logger`/`F_OP_Check` per `option()` an/aus
-(Standard `ON`). `code/compositor/CMakeLists.txt` prüft mit `if(TARGET F_OPCheck)`
-bzw. `if(TARGET Logger)`, ob das jeweilige Target überhaupt existiert, bevor
-gelinkt wird, und setzt bei Erfolg zusätzlich eine **PUBLIC** Compile-Definition
-(`ENABLE_F_OPCHECK`/`ENABLE_LOGGER`). Diese steuert `#ifdef`-Blöcke in
-`Application.h`/`.cpp` (Member, Includes, Nutzung) — PUBLIC ist nötig, damit
-`app/main.cpp` (inkludiert `Application.h`) denselben Makro-Stand sieht wie
-`Application.cpp`, sonst ODR-Verstoß durch unterschiedliches Klassenlayout.
-`ENABLE_LOGGER=ON` ohne `ENABLE_F_OPCHECK=ON` bricht mit `FATAL_ERROR` ab
-(Logger braucht `IFileWriter&`, `FileWriter` ist die einzige Implementierung).
-Details siehe `README.md`.
-
-## App-Ressourcen: `config/config.json`, `add_config()` / `add_log()`
-
-`code/app/CMakeLists.txt` ruft **nach** `add_executable(Application main.cpp)` zwei
-Ressourcen-Helfer auf (definiert in `cmake/AddConfig.cmake` / `cmake/AddLog.cmake`,
-im Root per `include(...)` eingebunden) und linkt deren Targets plus `nlohmann_json`
-PRIVATE. Beide sind — wie `add_interface()` — reine INTERFACE-Libs ohne Quellcode:
-
-- `add_config(TARGET Application)` → Target `Config`; Compile-Definition
-  `APP_CONFIG_FILE="<abs. Pfad zu config/config.json>"` (dazu `CONFIG_FILE` als Alias
-  und `LOG_COMPILE_LEVEL` via `$<IF:$<CONFIG:Release>,2,0>`; beide derzeit in C++
-  ungenutzt). Kopiert `config/config.json` per POST_BUILD neben die Exe.
-- `add_log(TARGET Application)` → Target `Log`; Compile-Definition
-  `APP_LOG_FILE="$<TARGET_FILE_DIR:Application>/app.log"`.
-
-`code/app/Presets.cpp` verbraucht das: `LoadPresets()` liest `config/config.json`
-über `nlohmann/json` (setzt UTF-8-Konsole, gibt Begrüßung + Sprache/LogLevel aus),
-`WriteLog()` hängt an `APP_LOG_FILE` an. Beide sind mit `#ifdef APP_CONFIG_FILE` /
-`#ifdef APP_LOG_FILE` umschlossen — ohne die `add_config`/`add_log`-Aufrufe fällt
-der Code auf ein No-Op zurück und baut trotzdem.
-
-`config/config.json` ist eingecheckt (Laufzeit-Ressource); die Kopie unter
-`build/code/app/` ist generiert. Fallstrick: `add_config` nutzt `copy_if_different`
-— fehlt die Quelldatei, bricht der Build ab. Da `Presets.cpp` `nlohmann/json` und
-`<windows.h>` zusammen zieht, definiert `Presets.h` vor `<windows.h>` `NOMINMAX`
-(sonst kollidieren die `min`/`max`-Makros).
-
-## Fallstricke
-
-- `if(TARGET ...)` wird **sofort** beim Erreichen der Zeile ausgewertet, nicht erst am Ende der Konfiguration wie `target_link_libraries`. Deshalb müssen `code/Logger`/`code/F_OP_Check` im Root **vor** `code/compositor` per `add_subdirectory` eingebunden werden — sonst sind die Guards immer `false`.
-- `file(GLOB ... CONFIGURE_DEPENDS)` wird über `add_module()` einheitlich für Sources benutzt (Logger, F_OPCheck). `Compositor` globt weiterhin selbst in seiner eigenen CMakeLists.txt. Beim Hinzufügen neuer `.cpp`-Dateien reicht ein erneutes Konfigurieren.
-- `code/app/CMakeLists.txt` globt **nicht** — `add_executable(Application main.cpp)` listet nur `main.cpp` explizit. `Presets.cpp` wird stattdessen direkt per `#include "Presets.cpp"` in `main.cpp` eingebunden (nicht als eigene Übersetzungseinheit kompiliert), deshalb sind alle Funktionen darin `inline`. Neue `.cpp`-Dateien unter `code/app/` werden nur gebaut, wenn sie entweder ebenso `#include`t oder explizit in `add_executable(...)` ergänzt werden.
-- **Dritt-Bibliotheken liegen unter `libs/`**, per `add_subdirectory(libs)` in der Root-`CMakeLists.txt` **vor** den `code/`-Modulen eingehängt (damit Module dagegen linken können). `libs/CMakeLists.txt` zieht `nlohmann/json` (v3.12.0) per `FetchContent` und entpackt es nach `libs/nlohmann-json/`. Dieser Ordner ist **nicht** eingecheckt (steht in `.gitignore`) — er wird beim Konfigurieren heruntergeladen, es ist also Netzwerk beim ersten `cmake -S . -B build` nötig. Ergebnis ist das INTERFACE-Target `nlohmann_json` (Alias `nlohmann_json::nlohmann_json`), gegen das jedes Modul linkt, das JSON braucht: `target_link_libraries(<Modul> PRIVATE nlohmann_json)` (json nur in `.cpp`) bzw. `PUBLIC` (json-Typ im öffentlichen Header). Genutzt wird es aktuell von `code/app` (`Presets.cpp` → `LoadPresets()` parst `config/config.json`, siehe „App-Ressourcen").
+1. `code/<Name>/` mit `api/`, `include/<Name>/`, `src/` anlegen.
+2. `api/CMakeLists.txt`: `add_interface(NAME <Name> [DEPENDS <Fremde>_API])`.
+3. `code/<Name>/CMakeLists.txt`: `add_module(NAME <Name> DEPENDS <Fremde>_API)`.
+4. Im Root `add_subdirectory(code/<Name>)` **vor** `code/compositor` einhängen
+   (ggf. mit eigenem `option()`-Schalter + Guard im Compositor).

@@ -1,7 +1,7 @@
 //
 // Created by Dennis on 13.10.2025.
 //
-#include "../includes/ArgumenteAuswerten.h"
+#include "ArgumenteAuswerten.h"
 
 namespace Setup
 {

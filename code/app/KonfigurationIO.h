@@ -1,6 +1,6 @@
 #pragma once
-// Impl-Header des Konfiguration-Moduls: Persistenz + Argument-Merge fuer den
-// Vertrag. Haelt JSON aus dem Vertrag heraus - dieser Header kennt kein JSON,
+// app-Layer-Header: Persistenz + Argument-Merge fuer den Vertrag-struct.
+// Haelt JSON aus dem Vertrag heraus - dieser Header kennt kein JSON,
 // nur KonfigurationIO.cpp bindet nlohmann ein.
 #include <filesystem>
 #include <map>

@@ -16,6 +16,10 @@ target_include_directories(${MODULE_NAME}
 
 )
 
+# Vertrag der Konfiguration: Application.cpp liest Felder von Setup::Konfiguration.
+# PRIVATE, weil Application.h den Typ nur forward-declared (const&), nicht inkludiert.
+target_link_libraries(${MODULE_NAME} PRIVATE Konfiguration_API)
+
 
 # 2 Module eingebunden:
 # 1. F_OPCheck

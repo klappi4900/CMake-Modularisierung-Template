@@ -32,8 +32,10 @@ if(ENABLE_F_OPCHECK)
     add_subdirectory(code/F_OP_Check)
 endif()
 
+
 # Dritt-Bibliotheken (nlohmann/json) bereitstellen, bevor Module dagegen linken.
 add_subdirectory(libs)
+add_subdirectory(code/Konfiguration)   # reiner Vertrag: Konfiguration_API (struct, JSON-frei)
 add_subdirectory(code/app)
 add_subdirectory(code/compositor)
 

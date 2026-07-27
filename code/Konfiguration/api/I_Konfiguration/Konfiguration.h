@@ -6,7 +6,7 @@ namespace Setup
     // Reiner Vertrag: die effektiven Einstellungen als Wert-Objekt.
     // Bewusst OHNE JSON und OHNE Datei-I/O - damit dieser Header von jeder Schicht
     // gesehen werden darf (auch vom Compositor und einer spaeteren GUI).
-    // Laden/Speichern uebernimmt die Impl (include/KonfigurationIO.*).
+    // Laden/Speichern uebernimmt der app-Layer (KonfigurationIO.*).
     struct Konfiguration
     {
         // --- Darstellung / Presets ---
