@@ -1,6 +1,9 @@
 {
-  "sprache": "de",
+  "sprache": "DE_de",
   "konsoleUtf8": true,
   "begruessung": "Willkommen beim CMake-Modularisierung-Template",
-  "logLevel": "info"
+  "logLevel": "info",
+  "verbose": false,
+  "path": ".",
+  "output": ""
 }

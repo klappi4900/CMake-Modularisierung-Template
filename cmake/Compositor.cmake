@@ -1,0 +1,7 @@
+function(compositor_linked TARGET MODUL)
+    if (TARGET ${MODUL})
+        target_link_libraries(${TARGET} PRIVATE ${MODUL})
+        string(TOUPPER ${MODUL} FLAG)
+        target_compile_definitions(${TARGET} PUBLIC ENABLE_${FLAG})
+    endif ()
+endfunction()

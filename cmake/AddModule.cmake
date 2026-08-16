@@ -1,5 +1,5 @@
 function(add_module)
-      cmake_parse_arguments(ARG "" "NAME" "DEPENDS" ${ARGN})
+      cmake_parse_arguments(ARG "" "NAME" "DEPENDS;PRIVATE_DEPENDS" ${ARGN})
 
       add_subdirectory(api)   # jedes Modul hat eine api/-Sublib
 
@@ -11,5 +11,10 @@ function(add_module)
               PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
       )
 
-      target_link_libraries(${ARG_NAME} PUBLIC ${ARG_NAME}_API ${ARG_DEPENDS})
+      # PUBLIC: Vertrag + Typen, die in öffentlichen Headern auftauchen (transitiv).
+      # PRIVATE_DEPENDS: nur in src/*.cpp benutzt (z. B. nlohmann_json) -> leakt nicht.
+      target_link_libraries(${ARG_NAME}
+              PUBLIC  ${ARG_NAME}_API ${ARG_DEPENDS}
+              PRIVATE ${ARG_PRIVATE_DEPENDS}
+      )
 endfunction()

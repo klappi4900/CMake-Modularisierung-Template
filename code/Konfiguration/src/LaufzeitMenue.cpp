@@ -1,7 +1,8 @@
 //
 // Implementierung von Ebene 5: das interaktive Laufzeit-Menü.
 //
-#include "../includes/LaufzeitMenue.h"
+#include "LaufzeitMenue.h"
+#include "KonfigurationIO.h"
 
 #include <cctype>
 #include <iostream>
@@ -66,7 +67,7 @@ void laufzeit_menue(Setup::Konfiguration& config, const std::filesystem::path& s
             zeile_lesen("Neuer output: ", config.output);
         }
         else if (eingabe == "4") {
-            config.in_datei(speicherpfad.string());
+            Setup::speichere_konfiguration(config, speicherpfad);
             std::cout << "Gespeichert.\n";
         }
         else {

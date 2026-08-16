@@ -10,9 +10,9 @@ namespace Setup
     struct Konfiguration
     {
         // --- Darstellung / Presets ---
-        std::string sprache     = "de";
+        std::string sprache     = "DE_de";
         bool        konsoleUtf8 = true;
-        std::string begruessung = "";
+        std::string begruessung = "keine struct Begruessung";
         std::string logLevel    = "info";
 
         // --- Verhalten ---

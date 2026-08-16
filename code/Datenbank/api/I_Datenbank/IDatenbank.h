@@ -11,6 +11,9 @@ namespace Persistenz
     {
         virtual ~IDatenbank() = default;
 
+//        virtual void read() = 0;
+//        virtual void create() =0;
+//        virtual void delete_row() =0;
         virtual void schreibe(const std::string& schluessel, const std::string& wert) = 0;
         virtual std::optional<std::string> lese(const std::string& schluessel) const = 0;
     };

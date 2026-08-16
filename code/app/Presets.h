@@ -9,16 +9,14 @@
 #endif
 #include <windows.h>
 
-inline void SetupKonsoleToGerman();
+namespace Setup {
+    void SetupKonsoleToGerman();
+    void WriteLog(const std::string& nachricht);
 
-inline void LoadPresets();
+    enum class FileORFolder{
+        File,
+        Folder,
+    };
 
-inline void WriteLog(const std::string& nachricht);
-
-enum class FileORFolder{
-    File,
-    Folder,
+    void readInputArguments();
 };
-
-inline void readInputArguments();
-

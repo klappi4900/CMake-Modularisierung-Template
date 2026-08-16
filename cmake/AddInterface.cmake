@@ -1,6 +1,6 @@
 # Legt die INTERFACE-Bibliothek <NAME>_API an: den reinen Vertrag eines Moduls
-# (nur Header, keine Implementierung). Aufruf in code/<Name>/api/CMakeLists.txt,
-# analog zu add_module() in code/<Name>/CMakeLists.txt.
+# (nur Header, keine Implementierung). Aufruf in code/<Name>/api/Compositor.cmake,
+# analog zu add_module() in code/<Name>/Compositor.cmake.
 #
 #   add_interface(NAME Logger)                    -> Target Logger_API
 #   add_interface(NAME Logger DEPENDS Foo_API)    -> Logger_API zieht Foo_API mit

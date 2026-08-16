@@ -7,7 +7,7 @@
 //
 #pragma once
 #include <filesystem>
-#include "Konfiguration.h"
+#include "I_Konfiguration/Konfiguration.h"
 
 // Startet die interaktive Menü-Schleife.
 //   config        - die effektive Konfiguration; wird direkt verändert (Referenz!).
