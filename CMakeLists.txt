@@ -29,17 +29,20 @@ if(ENABLE_F_OPCHECK)
     add_subdirectory(code/F_OP_Check)
 endif()
 
-# Konfigurations-Vertrag (nur Header, keine Abhängigkeiten). Muss vor
-# compositor UND app stehen, da beide gegen Konfiguration_API linken.
-add_subdirectory(code/Konfiguration)
-add_subdirectory(code/Datenbank)
 
 # Dritt-Bibliotheken (nlohmann/json) bereitstellen, bevor Module dagegen linken.
+# Muss vor code/Konfiguration stehen: das Modul linkt nlohmann_json PRIVATE.
 add_subdirectory(libs)
 #add_subdirectory(config)
 #add_subdirectory(docs)
+
+# Konfigurations-Modul (Vertrag Konfiguration_API + Impl KonfigurationIO/LaufzeitMenue).
+# Muss vor Compositor UND app stehen, da beide dagegen linken.
+add_subdirectory(code/Konfiguration)
+add_subdirectory(code/Datenbank)
+
 add_subdirectory(code/app)
-add_subdirectory(code/compositor)
+add_subdirectory(code/Compositor)
 
 
 

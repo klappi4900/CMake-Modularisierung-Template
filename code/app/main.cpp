@@ -17,8 +17,14 @@ int main(int argc, char** argv) {
     //using namespace Setup;
 
     // Kaskade Stufe 1+2: Code-Defaults (im struct) <- config.json.
-    const std::filesystem::path konfigPfad = APP_CONFIG_FILE;
+    // Ohne add_config() fehlt APP_CONFIG_PATH -> nur die struct-Defaults greifen.
+#ifdef APP_CONFIG_PATH
+    const std::filesystem::path konfigPfad = APP_CONFIG_PATH;
     Setup::Konfiguration konfig = Setup::lade_konfiguration(konfigPfad);
+#else
+    const std::filesystem::path konfigPfad{};
+    Setup::Konfiguration konfig{};
+#endif
 
     // Kaskade Stufe 3: CLI-Argumente darueberlegen (hoechste Prioritaet).
     const std::vector<std::string> argumente(argv + 1, argv + argc);

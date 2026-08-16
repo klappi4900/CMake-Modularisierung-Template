@@ -123,16 +123,16 @@ Ressourcen-Helfer auf (aus `cmake/AddConfig.cmake` / `cmake/AddLog.cmake`) — r
 INTERFACE-Libs, die Pfade als Compile-Definitions liefern:
 
 - `add_config(TARGET Application)` → Target `Config`;
-  `APP_CONFIG_FILE="<abs. Pfad zu config/config.json>"` (dazu `CONFIG_FILE`-Alias und
-  `LOG_COMPILE_LEVEL` via `$<IF:$<CONFIG:Release>,2,0>`; beide in C++ derzeit
-  ungenutzt). Kopiert `config/config.json` per POST_BUILD neben die Exe
+  `APP_CONFIG_PATH="<abs. Pfad zu config/config.json>"` (dazu `LOG_COMPILE_LEVEL`
+  via `$<IF:$<CONFIG:Release>,2,0>`, in C++ derzeit ungenutzt). Kopiert
+  `config/config.json` per POST_BUILD neben die Exe
   (`copy_if_different` — fehlt die Quelle, bricht der Build ab).
 - `add_log()` (**kein** `TARGET`) → Target `Log`;
   `APP_LOG_FILE="<root>/log/app.log"` (`LOG_PATH = ${CMAKE_SOURCE_DIR}/log`, per
   `file(MAKE_DIRECTORY)` zur Konfigurationszeit angelegt). Die `app.log` im Quellbaum
   ist über `/log/` in `.gitignore` ausgenommen.
 
-**Nutzung:** `main.cpp` nimmt `APP_CONFIG_FILE` als Pfad und lässt
+**Nutzung:** `main.cpp` nimmt `APP_CONFIG_PATH` als Pfad und lässt
 `lade_konfiguration()` (Modul `Konfiguration`) die Datei via `nlohmann/json` parsen;
 `uebernehme_argumente()` legt CLI-Argumente darüber. `WriteLog()` (Presets) hängt an
 `APP_LOG_FILE` an. Beide Makros sind `#ifdef`-abgesichert — ohne `add_config`/`add_log`
