@@ -7,7 +7,7 @@ namespace Setup      { struct Konfiguration; }
 namespace Persistenz { struct IDatenbank; }
 
 #ifdef ENABLE_F_OPCHECK
-class IFileWriter;
+class I_FileWriter;
 #endif
 #ifdef ENABLE_LOGGER
 class ILogger;
@@ -27,7 +27,7 @@ private:
     const Setup::Konfiguration&             konfig_;
     std::unique_ptr<Persistenz::IDatenbank> datenbank_;
 #ifdef ENABLE_F_OPCHECK
-    std::unique_ptr<IFileWriter> fileWriter_;
+    std::unique_ptr<I_FileWriter> fileWriter_;
 #endif
 #ifdef ENABLE_LOGGER
     std::unique_ptr<ILogger>     logger_;

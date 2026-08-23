@@ -1,7 +1,7 @@
 #include "FileWriter.h"
 #include <iostream>
 
-FileWriter::FileWriter(std::vector<std::unique_ptr<IWriteCheck>> checks)
+FileWriter::FileWriter(std::vector<std::unique_ptr<I_WriteCheck>> checks)
     : checks_(std::move(checks)) {}
 
 void FileWriter::write(const std::string& data) {

@@ -18,7 +18,7 @@
 Application::Application(const Setup::Konfiguration& konfig)
     : konfig_(konfig) {
 #ifdef ENABLE_F_OPCHECK
-    std::vector<std::unique_ptr<IWriteCheck>> checks;   // vorerst leer
+    std::vector<std::unique_ptr<I_WriteCheck>> checks;   // vorerst leer
     auto fw = std::make_unique<FileWriter>(std::move(checks));
 
 #ifdef ENABLE_LOGGER

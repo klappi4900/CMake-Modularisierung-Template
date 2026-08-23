@@ -18,12 +18,13 @@ Jedes fachliche Modul trennt strikt **Vertrag** (API, nur Header, INTERFACE-Lib)
 ```
 code/<Modul>/
 ├── api/                    INTERFACE-Lib "<Modul>_API" — nur Header (Interfaces, Prefix "I")
-│   └── I_<Modul>/
-├── include/<Modul>/        öffentliche Header der Implementierung
-├── src/                    .cpp-Dateien, nur intern sichtbar
+│   └── I_<Modul>.h/
+├── include/<Modul>.h        öffentliche Header der Implementierung
+├── src/<Modul>.cpp            .cpp-Dateien, nur intern sichtbar
 └── CMakeLists.txt
 ```
-
+Wichtig ist das auch das der Ordnernamen bereits im ersten Buchstaben grossgeschrieben wird auch die zugehörigen Dateien .h 
+und .cpp werden genauso geschrieben.
 Nicht jedes Modul braucht zwingend ein eigenes `api/` — nur wenn ein anderes Modul gegen seinen Vertrag linken soll. Ein reiner Composition-Root (s.u.) braucht z. B. kein `api/`, solange niemand ihn als Vertrag konsumiert, sondern ihn nur als fertiges Ausführungsziel nutzt. Ein Exe-Target (z. B. `app`) kann auch ganz ohne `api/`/`include/`/`src/`-Unterordner flach bleiben (nur `main.cpp` + `CMakeLists.txt`).
 
 ## Helferfunktion `add_module()`

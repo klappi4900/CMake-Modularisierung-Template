@@ -2,7 +2,9 @@
 .claude/settings.local.json
 
 # Per FetchContent beim Konfigurieren heruntergeladene Dritt-Bibliotheken.
-/libs/nlohmann-json/
+/third_party/nlohmann-json/
+/third_party/googletest/
+/third_party/sqlite3/
 
 # Von add_log() angelegtes Log-Verzeichnis (Laufzeit-Artefakte).
 /log/*
